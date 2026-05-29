@@ -33,6 +33,10 @@ path = "src/lib.rs"
 name = "uuid-rs"
 path = "src/main.rs"
 
+[[bench]]
+name = "uuid_hot_path"
+harness = false
+
 [dependencies]
 anyhow = "=1.0.102"
 clap = { version = "=4.6.1", features = ["derive", "env"] }

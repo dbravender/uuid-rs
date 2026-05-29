@@ -1,0 +1,94 @@
+# uuid-rs
+
+> The world's fastest uuid microservice* that I'm aware of
+
+`uuid-rs` is a real Rust gRPC service for generating real UUIDv4 values. It has one
+endpoint, one Protobuf wire protocol, and one tiny trick: the service returns raw
+16-byte UUID payloads, so the client serializes them into canonical UUID strings on
+the other end.
+
+Inspired by <https://x.com/paulbohm/status/2052898355219517708?s=20>.
+
+It doesn't implement the database as described in the tweet since *that* would be stupid.
+
+## Protocol
+
+```protobuf
+service Uuid {
+  rpc Generate(GenerateRequest) returns (GenerateResponse);
+}
+
+message GenerateRequest {}
+
+message GenerateResponse {
+  bytes uuid = 1;
+}
+```
+
+`GenerateResponse.uuid` is exactly 16 bytes. It is a valid UUIDv4 value. It is not a
+string. This is performance engineering, apparently.
+
+## Run
+
+```bash
+cargo run --release --bin uuid-rs -- --listen 127.0.0.1:50051
+```
+
+## Call
+
+```bash
+cargo run --example client -- --endpoint http://127.0.0.1:50051
+```
+
+The example client receives bytes, validates the length, constructs a UUID value,
+and formats the canonical hyphenated string locally.
+
+## Dependency Policy
+
+The direct runtime dependencies are intentionally boring and widely used Rust
+ecosystem crates: `tokio`, `tonic`, `prost`, `uuid`, and `clap`. Direct dependency
+versions are exact-pinned to releases published at least seven days before adoption.
+
+`Cargo.lock` is committed for the service binary. Use `cargo cooldown update` when
+refreshing the lockfile, then verify the result with `cargo quarantine`.
+
+## Quality Checks
+
+```bash
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+cargo bench --no-run
+cargo quarantine
+cargo package
+```
+
+## Benchmarks
+
+Local hot-path benchmarks:
+
+```bash
+cargo bench
+```
+
+Real gRPC load test with [`ghz`](https://ghz.sh/):
+
+```bash
+cargo run --release --bin uuid-rs -- --listen 127.0.0.1:50051
+ghz \
+  --proto proto/uuid_service.proto \
+  --call uuid.v1.Uuid.Generate \
+  --data '{}' \
+  --duration 30s \
+  --concurrency 64 \
+  --insecure \
+  127.0.0.1:50051
+```
+
+Record the machine, Rust version, command, concurrency, request rate, latency
+percentiles, and throughput with any published result.
+
+`*` Benchmark claims are local, reproducible, and constrained to machines and
+commands that were actually run. Please do not summon the distributed systems
+committee.
