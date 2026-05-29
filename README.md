@@ -1,6 +1,8 @@
 # uuid-rs
 
-> The world's fastest uuid microservice* that I'm aware of
+> The world's fastest uuid microservice*
+> 
+> * that I'm aware of
 
 `uuid-rs` is a real Rust gRPC service for generating real UUIDv4 values. It has one
 endpoint, one Protobuf wire protocol, and one tiny trick: the service returns raw
@@ -53,6 +55,17 @@ versions are exact-pinned to releases published at least seven days before adopt
 refreshing the lockfile, then verify the result with `cargo quarantine`.
 
 ## Quality Checks
+
+The full check suite (format, clippy, tests, docs, dependency age, package dry
+run) is declared once in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) and
+run with [`prek`](https://github.com/j178/prek).
+
+```bash
+prek install          # one-time: run the checks automatically on every git commit
+prek run --all-files  # run the whole suite on demand
+```
+
+The individual commands, if you want to run one in isolation:
 
 ```bash
 cargo fmt --check
