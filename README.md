@@ -1,5 +1,21 @@
 # uuid-rs
 
+```
+    ██╗   ██╗██╗   ██╗██╗██████╗       ██████╗ ███████╗
+    ██║   ██║██║   ██║██║██╔══██╗      ██╔══██╗██╔════╝
+    ██║   ██║██║   ██║██║██║  ██║█████╗██████╔╝███████╗
+    ██║   ██║██║   ██║██║██║  ██║╚════╝██╔══██╗╚════██║
+    ╚██████╔╝╚██████╔╝██║██████╔╝      ██║  ██║███████║
+     ╚═════╝  ╚═════╝ ╚═╝╚═════╝       ╚═╝  ╚═╝╚══════╝
+   ·▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄·
+   ·  T H E   W O R L D ' S   F A S T E S T   U U I D  ·
+   ·    M I C R O S E R V I C E *  ( I  T H I N K )    ·
+   ·▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀·
+              ▄▄▄  16 BYTES  ▄▄▄  173 CRATES
+             ▐███▌ OVER THE  ▐███▌ TO SHIP
+              ▀▀▀  WIRE      ▀▀▀   THEM
+```
+
 > The world's fastest uuid microservice*
 > 
 > * that I'm aware of
@@ -29,6 +45,54 @@ message GenerateResponse {
 
 `GenerateResponse.uuid` is exactly 16 bytes. It is a valid UUIDv4 value. It is not a
 string. This is performance engineering, apparently.
+
+## Architecture
+
+```
+            ╔════════════════════════════════════════════════════════════╗
+            ║         T H E   u u i d - r s   M I C R O S E R V I C E      ║
+            ╚════════════════════════════════════════════════════════════╝
+
+   ┌───────────────────────────┐                  ┌───────────────────────────┐
+   │        C L I E N T         │                  │        S E R V E R         │
+   │      (examples/client)     │                  │       (bin: uuid-rs)        │
+   ├───────────────────────────┤                  ├───────────────────────────┤
+   │                           │                  │                           │
+   │  GenerateRequest {}       │                  │   ┌───────────────────┐   │
+   │   (literally empty)       │                  │   │   UuidGenerator    │   │
+   │           │               │                  │   │   ::generate()     │   │
+   │           ▼               │                  │   └─────────┬─────────┘   │
+   │  ┌─────────────────┐      │   ░░ HTTP/2 ░░   │             ▼             │
+   │  │  tonic  client  │ ═══════════ TCP ══════════▶ ┌───────────────────┐   │
+   │  │  hyper · h2     │ ◀══════ (the slow part) ════ │  Uuid::new_v4()   │   │
+   │  └─────────────────┘      │   ~tens of µs    │   │     ~744 ns       │   │
+   │           │               │                  │   └─────────┬─────────┘   │
+   │           ▼               │                  │             ▼             │
+   │  16 raw bytes  ░░░░░░░     │                  │   GenerateResponse {      │
+   │           │               │                  │     uuid: [u8; 16]        │
+   │           ▼               │                  │   }  ← 16 bytes, no alloc  │
+   │  uuid.hyphenated()        │                  │      of string. ever.     │
+   │     ~26 ns  ◀── the only  │                  │                           │
+   │  67e55044-10b1-426f-...   │      part this   │                           │
+   │             project saves │                  │                           │
+   └───────────────────────────┘                  └───────────────────────────┘
+
+   ┌──────────────────────────────────────────────────────────────────────────┐
+   │  ⚠  PERF NOTE: the network round-trip costs ~1000x more than the UUID.     │
+   │     We heroically avoided ~26 ns of string formatting on the server and    │
+   │     then shipped the bytes across a ~50,000 ns gRPC stack to do it.        │
+   │     This is the joke. The joke is the architecture.                        │
+   └──────────────────────────────────────────────────────────────────────────┘
+
+   DEPENDENCY ICEBERG (what it takes to move 16 bytes)
+   ───────────────────────────────────────────────────
+     uuid          ▏▏▏▏                                    4 crates  ← the job
+     tokio         ▏▏▏▏▏▏▏▏▏▏▏▏▏                           13 crates
+     clap          ▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏                       17 crates
+     tonic (gRPC)  ▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏...     65 crates  ← the bit
+                                                          ───────────
+                                                          173 total
+```
 
 ## Run
 
