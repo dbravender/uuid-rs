@@ -1,3 +1,5 @@
+//! Build script for generating gRPC and Protobuf bindings.
+
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

@@ -12,7 +12,7 @@
 
 ## File Structure
 
-- Create `Cargo.toml`: package metadata, dependencies, lint policy, and binary declaration.
+- Create `Cargo.toml`: package metadata, dependencies, and lint policy.
 - Create `Cargo.lock`: committed application lockfile after dependency-age verification.
 - Create `rust-toolchain.toml`: stable toolchain plus `rustfmt` and `clippy`.
 - Create `rustfmt.toml`: stable formatting policy.
@@ -86,10 +86,6 @@ include = [
 [lib]
 name = "uuid_rs"
 path = "src/lib.rs"
-
-[[bin]]
-name = "uuid-rs"
-path = "src/main.rs"
 
 [dependencies]
 anyhow = "=1.0.102"
@@ -472,6 +468,14 @@ impl Uuid for UuidGenerator {
 ```
 
 - [ ] **Step 4: Create the server binary**
+
+Append to `Cargo.toml`:
+
+```toml
+[[bin]]
+name = "uuid-rs"
+path = "src/main.rs"
+```
 
 Create `src/main.rs`:
 
