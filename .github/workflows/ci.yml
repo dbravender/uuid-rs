@@ -34,7 +34,7 @@ jobs:
         # (e.g. `cargo package`'s verify step, which does not re-read
         # rust-toolchain.toml) use it instead of the runner's older default.
         run: |
-          rustup toolchain install 1.96.0 --component clippy rustfmt --profile minimal
+          rustup toolchain install 1.96.0 --profile minimal --component clippy --component rustfmt
           rustup default 1.96.0
           rustup show
 
