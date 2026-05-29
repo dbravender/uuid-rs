@@ -54,6 +54,24 @@ versions are exact-pinned to releases published at least seven days before adopt
 `Cargo.lock` is committed for the service binary. Use `cargo cooldown update` when
 refreshing the lockfile, then verify the result with `cargo quarantine`.
 
+## Supply Chain Security
+
+CI follows the GitHub Actions hardening practices described in Astral's
+[Open source security at Astral](https://astral.sh/blog/open-source-security-at-astral):
+
+- **Actions pinned to commit SHAs.** Every `uses:` in
+  [`.github/workflows/ci.yml`](.github/workflows/ci.yml) is pinned to a full-length
+  commit SHA (with the human-readable version as a trailing comment), because tags
+  and branches are mutable and can be repointed after review.
+- **Minimal token permissions.** The workflow defaults to `permissions: {}` and each
+  job opts into only what it needs (`contents: read` here).
+- **No persisted credentials.** `actions/checkout` runs with
+  `persist-credentials: false` so the `GITHUB_TOKEN` is not left in the checkout's
+  git config for later steps to reuse.
+
+When bumping a pinned action, re-resolve the tag to its commit SHA rather than
+trusting the tag in place.
+
 ## Quality Checks
 
 The full check suite (format, clippy, tests, docs, dependency age, package dry
