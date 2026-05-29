@@ -29,6 +29,10 @@ include = [
 name = "uuid_rs"
 path = "src/lib.rs"
 
+[[bin]]
+name = "uuid-rs"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "=1.0.102"
 clap = { version = "=4.6.1", features = ["derive", "env"] }
@@ -44,6 +48,7 @@ tonic-prost-build = "=0.14.6"
 
 [dev-dependencies]
 criterion = { version = "=0.8.2", default-features = false, features = ["cargo_bench_support"] }
+tokio-stream = { version = "=0.1.18", features = ["net"] }
 
 [lints.rust]
 missing_docs = "deny"

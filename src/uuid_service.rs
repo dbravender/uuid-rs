@@ -1,6 +1,10 @@
 use uuid::Uuid as RawUuid;
 
+use tonic::{Request, Response, Status};
+
+use crate::proto::GenerateRequest;
 use crate::proto::GenerateResponse;
+use crate::proto::uuid_server::Uuid;
 
 /// Generate one real UUIDv4 response as raw 16-byte Protobuf bytes.
 #[must_use]
@@ -48,6 +52,20 @@ impl std::fmt::Display for InvalidUuidBytes {
 }
 
 impl std::error::Error for InvalidUuidBytes {}
+
+/// gRPC implementation for the UUID service.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct UuidGenerator;
+
+#[tonic::async_trait]
+impl Uuid for UuidGenerator {
+    async fn generate(
+        &self,
+        _request: Request<GenerateRequest>,
+    ) -> Result<Response<GenerateResponse>, Status> {
+        Ok(Response::new(generate_response()))
+    }
+}
 
 #[cfg(test)]
 mod tests {
