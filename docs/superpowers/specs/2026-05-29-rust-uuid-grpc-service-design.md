@@ -6,7 +6,7 @@ Build a publishable Rust project for a single-purpose UUID microservice with the
 
 > The world's fastest uuid microservice* that I'm aware of
 
-The service is intentionally funny in concept and serious in execution. It exposes one gRPC method backed by Protobuf, returns real UUIDv4 values, keeps the wire format lean, and documents the joke inspiration at <https://x.com/paulbohm/status/2052898355219517708?s=20>.
+The service is intentionally funny in concept and serious in execution. It exposes one gRPC method backed by Protobuf, returns real UUIDv4 values, keeps the wire format lean, and documents the joke inspiration at <https://x.com/paulbohm/status/2052898355219517708?s=20>. It also says it "doesn't implement the database as described in the tweet since *that* would be stupid" near that attribution.
 
 ## Goals
 
@@ -15,6 +15,7 @@ The service is intentionally funny in concept and serious in execution. It expos
 - Return UUIDs as raw 16-byte Protobuf `bytes`, requiring clients to serialize or format them into canonical UUID strings on their side.
 - Ship as a polished Rust project: library core, server binary, generated protobuf integration, docs, benchmarks, examples, strict linting, formatting, and pre-commit checks through `prek`.
 - Use the latest stable Rust toolchain via the `stable` channel instead of relying on nightly features.
+- Enforce a seven-day minimum release age for locked crates with an off-the-shelf Cargo dependency quarantine tool.
 - Provide honest benchmark artifacts and repeatable commands for both internal hot-path benchmarks and real gRPC load testing.
 
 ## Non-Goals
@@ -92,6 +93,7 @@ The project will include:
 - `rust-toolchain.toml` set to the stable channel with `rustfmt` and `clippy` components.
 - Strict Rust lints in `Cargo.toml`, including denial of common correctness hazards and pedantic Clippy warnings with targeted allows where the project deliberately stays pragmatic.
 - `rustfmt.toml` for stable formatting configuration.
+- `cooldown.toml` and `quarantine.toml` configured for a seven-day minimum age on crates.io dependencies.
 - `.pre-commit-config.yaml` configured for `prek`, running formatting, Clippy, tests, and documentation checks.
 - README docs covering installation, running the server, calling it from a client, wire protocol details, benchmarks, and the inspiration link.
 - Crate-level docs that explain why the service returns bytes and how clients should serialize them.

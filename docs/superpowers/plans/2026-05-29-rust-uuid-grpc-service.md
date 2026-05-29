@@ -6,16 +6,19 @@
 
 **Architecture:** The crate has a library core, a `uuid-rs` server binary, generated Protobuf modules, an example client that serializes UUID bytes on the receiving side, Criterion benchmarks, and publication-quality docs/tooling. The hot path generates `Uuid::new_v4()`, returns `GenerateResponse { uuid: Vec<u8> }`, and deliberately does no UUID string formatting in the service.
 
-**Tech Stack:** Rust stable 1.96.0 channel, `tonic` 0.14.6, `tonic-prost` 0.14.6, `tonic-prost-build` 0.14.6, `prost` 0.14.3, `tokio` 1.52.3, `uuid` 1.23.1, `clap` 4.6.1, `criterion` 0.8.2, `protoc-bin-vendored`, `prek`.
+**Tech Stack:** Rust stable 1.96.0 channel, exact direct dependency pins published on or before 2026-05-22, `tonic` 0.14.6, `tonic-prost` 0.14.6, `tonic-prost-build` 0.14.6, `prost` 0.14.3, `tokio` 1.52.3, `uuid` 1.23.1, `clap` 4.6.1, `criterion` 0.8.2 without default Plotters/Rayon features, `protoc-bin-vendored` 3.2.0, `cargo-quarantine`, `prek`.
 
 ---
 
 ## File Structure
 
-- Create `Cargo.toml`: package metadata, dependencies, lint policy, binary/example/bench declarations.
+- Create `Cargo.toml`: package metadata, dependencies, lint policy, and binary declaration.
+- Create `Cargo.lock`: committed application lockfile after dependency-age verification.
 - Create `rust-toolchain.toml`: stable toolchain plus `rustfmt` and `clippy`.
 - Create `rustfmt.toml`: stable formatting policy.
 - Create `.gitignore`: target/build/editor ignores.
+- Create `cooldown.toml`: off-the-shelf lockfile downgrade policy.
+- Create `quarantine.toml`: off-the-shelf minimum dependency age verification policy.
 - Create `.pre-commit-config.yaml`: `prek` hooks for format, clippy, tests, docs, package dry run.
 - Create `proto/uuid_service.proto`: single gRPC service and raw bytes response.
 - Create `build.rs`: Protobuf compilation using vendored `protoc`.
@@ -67,12 +70,15 @@ keywords = ["uuid", "grpc", "protobuf", "microservice"]
 include = [
   "Cargo.toml",
   "README.md",
+  "Cargo.lock",
   "build.rs",
+  "cooldown.toml",
   "proto/**/*.proto",
   "src/**/*.rs",
   "examples/**/*.rs",
   "tests/**/*.rs",
   "benches/**/*.rs",
+  "quarantine.toml",
   "rust-toolchain.toml",
   "rustfmt.toml",
 ]
@@ -85,29 +91,21 @@ path = "src/lib.rs"
 name = "uuid-rs"
 path = "src/main.rs"
 
-[[example]]
-name = "client"
-path = "examples/client.rs"
-
-[[bench]]
-name = "uuid_hot_path"
-harness = false
-
 [dependencies]
-anyhow = "1.0.102"
-clap = { version = "4.6.1", features = ["derive", "env"] }
-prost = "0.14.3"
-tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread", "signal"] }
-tonic = { version = "0.14.6", features = ["transport"] }
-tonic-prost = "0.14.6"
-uuid = { version = "1.23.1", features = ["v4"] }
+anyhow = "=1.0.102"
+clap = { version = "=4.6.1", features = ["derive", "env"] }
+prost = "=0.14.3"
+tokio = { version = "=1.52.3", features = ["macros", "rt-multi-thread", "signal"] }
+tonic = { version = "=0.14.6", features = ["transport"] }
+tonic-prost = "=0.14.6"
+uuid = { version = "=1.23.1", features = ["v4"] }
 
 [build-dependencies]
-protoc-bin-vendored = "3.2.0"
-tonic-prost-build = "0.14.6"
+protoc-bin-vendored = "=3.2.0"
+tonic-prost-build = "=0.14.6"
 
 [dev-dependencies]
-criterion = "0.8.2"
+criterion = { version = "=0.8.2", default-features = false, features = ["cargo_bench_support"] }
 
 [lints.rust]
 missing_docs = "deny"
@@ -437,7 +435,7 @@ async fn grpc_generate_returns_raw_uuid_v4_bytes() {
 Add to `[dev-dependencies]` in `Cargo.toml`:
 
 ```toml
-tokio-stream = { version = "0.1.17", features = ["net"] }
+tokio-stream = { version = "=0.1.18", features = ["net"] }
 ```
 
 Run:
@@ -619,14 +617,25 @@ git commit -m "feat: add uuid client serialization example"
 
 ---
 
-### Task 5: Benchmarks, Docs, And Pre-Commit Checks
+### Task 5: Benchmarks, Docs, Dependency Age, And Pre-Commit Checks
 
 **Files:**
+- Modify: `Cargo.toml`
 - Create: `benches/uuid_hot_path.rs`
 - Create: `README.md`
+- Create: `cooldown.toml`
+- Create: `quarantine.toml`
 - Create: `.pre-commit-config.yaml`
 
-- [ ] **Step 1: Write benchmarks**
+- [ ] **Step 1: Declare and write benchmarks**
+
+Append to `Cargo.toml`:
+
+```toml
+[[bench]]
+name = "uuid_hot_path"
+harness = false
+```
 
 Create `benches/uuid_hot_path.rs`:
 
@@ -683,6 +692,8 @@ the other end.
 
 Inspired by <https://x.com/paulbohm/status/2052898355219517708?s=20>.
 
+It doesn't implement the database as described in the tweet since *that* would be stupid.
+
 ## Protocol
 
 ```protobuf
@@ -723,8 +734,19 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo test
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 cargo bench --no-run
+cargo quarantine
 cargo package
 ```
+
+## Dependency Age Policy
+
+Direct dependencies are exact-pinned to versions published at least seven days
+before adoption. `Cargo.lock` is committed for the service binary, and
+`cargo-quarantine` verifies every crates.io package in the lockfile against the
+same seven-day minimum before release.
+
+Use `cargo cooldown update` when refreshing `Cargo.lock`; it downgrades too-new
+registry releases to the newest compatible versions that satisfy the cooldown.
 
 ## Benchmarks
 
@@ -756,7 +778,29 @@ commands that were actually run. Please do not summon the distributed systems
 committee.
 ```
 
-- [ ] **Step 3: Write `prek` configuration**
+- [ ] **Step 3: Write dependency cooldown and quarantine config**
+
+Create `cooldown.toml`:
+
+```toml
+[cooldown]
+incompatible-publish-age = "deny"
+lockfile-baseline = "ignore"
+
+[registry]
+global-min-publish-age = "7 days"
+```
+
+Create `quarantine.toml`:
+
+```toml
+[rules]
+min_age_days = 7
+git_min_age_days = 14
+external_path = "deny"
+```
+
+- [ ] **Step 4: Write `prek` configuration**
 
 Create `.pre-commit-config.yaml`:
 
@@ -784,6 +828,11 @@ repos:
         entry: cargo doc --no-deps
         language: system
         pass_filenames: false
+      - id: dependency-age
+        name: dependency age
+        entry: cargo quarantine
+        language: system
+        pass_filenames: false
       - id: cargo-package
         name: cargo package
         entry: cargo package
@@ -791,22 +840,23 @@ repos:
         pass_filenames: false
 ```
 
-- [ ] **Step 4: Run benchmark compilation and docs checks**
+- [ ] **Step 5: Run benchmark compilation, dependency age, and docs checks**
 
 Run:
 
 ```bash
 cargo bench --no-run
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+cargo quarantine
 cargo package
 ```
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add benches/uuid_hot_path.rs README.md .pre-commit-config.yaml
+git add Cargo.toml benches/uuid_hot_path.rs README.md cooldown.toml quarantine.toml .pre-commit-config.yaml
 git commit -m "docs: add benchmarks and release checks"
 ```
 
@@ -839,6 +889,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo test
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 cargo bench --no-run
+cargo quarantine
 cargo package
 ```
 

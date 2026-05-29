@@ -1,0 +1,66 @@
+[package]
+name = "uuid-rs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+license = "MIT OR Apache-2.0"
+description = "The world's fastest uuid microservice* that I'm aware of."
+readme = "README.md"
+categories = ["network-programming", "web-programming"]
+keywords = ["uuid", "grpc", "protobuf", "microservice"]
+include = [
+  "Cargo.toml",
+  "Cargo.lock",
+  "README.md",
+  "build.rs",
+  "cooldown.toml",
+  "proto/**/*.proto",
+  "src/**/*.rs",
+  "examples/**/*.rs",
+  "tests/**/*.rs",
+  "benches/**/*.rs",
+  "scripts/**/*.mjs",
+  "quarantine.toml",
+  "rust-toolchain.toml",
+  "rustfmt.toml",
+]
+
+[lib]
+name = "uuid_rs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "uuid-rs"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "=1.0.102"
+clap = { version = "=4.6.1", features = ["derive", "env"] }
+prost = "=0.14.3"
+tokio = { version = "=1.52.3", features = ["macros", "rt-multi-thread", "signal"] }
+tonic = { version = "=0.14.6", features = ["transport"] }
+tonic-prost = "=0.14.6"
+uuid = { version = "=1.23.1", features = ["v4"] }
+
+[build-dependencies]
+protoc-bin-vendored = "=3.2.0"
+tonic-prost-build = "=0.14.6"
+
+[dev-dependencies]
+criterion = { version = "=0.8.2", default-features = false, features = ["cargo_bench_support"] }
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_code = "deny"
+unused_qualifications = "warn"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
+nursery = "deny"
+cargo = "warn"
+multiple_crate_versions = "allow"
+cargo_common_metadata = "allow"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package uuid.v1;
+
+service Uuid {
+  rpc Generate(GenerateRequest) returns (GenerateResponse);
+}
+
+message GenerateRequest {}
+
+message GenerateResponse {
+  bytes uuid = 1;
+}

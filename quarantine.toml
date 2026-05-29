@@ -1,0 +1,4 @@
+[rules]
+min_age_days = 7
+git_min_age_days = 14
+external_path = "deny"
