@@ -30,7 +30,13 @@ jobs:
           persist-credentials: false
 
       - name: Install Rust toolchain
-        run: rustup show
+        # Install and set 1.96.0 as the global default so even nested builds
+        # (e.g. `cargo package`'s verify step, which does not re-read
+        # rust-toolchain.toml) use it instead of the runner's older default.
+        run: |
+          rustup toolchain install 1.96.0 --component clippy rustfmt --profile minimal
+          rustup default 1.96.0
+          rustup show
 
       - name: Cache cargo registry and build
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
