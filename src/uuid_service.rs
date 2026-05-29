@@ -100,4 +100,20 @@ mod tests {
         assert_eq!(error.actual_len(), 3);
         assert_eq!(error.to_string(), "expected 16 UUID bytes, received 3");
     }
+
+    #[test]
+    fn client_side_formatting_produces_canonical_uuid_string() {
+        let response = GenerateResponse {
+            uuid: uuid::uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8")
+                .into_bytes()
+                .to_vec(),
+        };
+
+        let uuid = uuid_from_response(&response).expect("valid UUID bytes");
+
+        assert_eq!(
+            uuid.hyphenated().to_string(),
+            "67e55044-10b1-426f-9247-bb680e5fe0c8"
+        );
+    }
 }
