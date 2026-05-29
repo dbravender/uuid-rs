@@ -6,7 +6,7 @@ use crate::proto::GenerateRequest;
 use crate::proto::GenerateResponse;
 use crate::proto::uuid_server::Uuid;
 
-/// Generate one real UUIDv4 response as raw 16-byte Protobuf bytes.
+/// Generate one real `UUIDv4` response as raw 16-byte Protobuf bytes.
 #[must_use]
 pub fn generate_response() -> GenerateResponse {
     GenerateResponse {
@@ -16,14 +16,13 @@ pub fn generate_response() -> GenerateResponse {
 
 /// Convert a raw-byte UUID response into a UUID value for client-side formatting.
 pub fn uuid_from_response(response: &GenerateResponse) -> Result<RawUuid, InvalidUuidBytes> {
-    let bytes: [u8; 16] =
-        response
-            .uuid
-            .as_slice()
-            .try_into()
-            .map_err(|_| InvalidUuidBytes {
-                actual_len: response.uuid.len(),
-            })?;
+    let bytes: [u8; 16] = response
+        .uuid
+        .as_slice()
+        .try_into()
+        .map_err(|_| InvalidUuidBytes {
+            actual_len: response.uuid.len(),
+        })?;
     Ok(RawUuid::from_bytes(bytes))
 }
 

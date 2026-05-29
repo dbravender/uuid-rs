@@ -12,7 +12,11 @@ use uuid_rs::uuid_service::uuid_from_response;
 )]
 struct Args {
     /// gRPC endpoint to call.
-    #[arg(long, env = "UUID_RS_ENDPOINT", default_value = "http://127.0.0.1:50051")]
+    #[arg(
+        long,
+        env = "UUID_RS_ENDPOINT",
+        default_value = "http://127.0.0.1:50051"
+    )]
     endpoint: String,
 }
 
