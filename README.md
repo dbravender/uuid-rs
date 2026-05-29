@@ -68,6 +68,9 @@ CI follows the GitHub Actions hardening practices described in Astral's
 - **No persisted credentials.** `actions/checkout` runs with
   `persist-credentials: false` so the `GITHUB_TOKEN` is not left in the checkout's
   git config for later steps to reuse.
+- **Workflows audited with [`zizmor`](https://github.com/zizmorcore/zizmor).** It runs
+  as part of the `prek` suite (locally and in CI) and flags unpinned actions,
+  over-broad permissions, and impostor commits.
 
 When bumping a pinned action, re-resolve the tag to its commit SHA rather than
 trusting the tag in place.

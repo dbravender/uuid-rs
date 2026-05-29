@@ -18,14 +18,14 @@ env:
 
 jobs:
   prek:
-    name: prek (fmt, clippy, test, doc, dependency-age, package)
+    name: prek (fmt, clippy, test, doc, dependency-age, package, zizmor)
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       # Actions are pinned to full commit SHAs (tags/branches are mutable).
       # See https://astral.sh/blog/open-source-security-at-astral
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -33,7 +33,7 @@ jobs:
         run: rustup show
 
       - name: Cache cargo registry and build
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             ~/.cargo/registry
@@ -42,8 +42,11 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - name: Install cargo-quarantine
-        run: cargo install cargo-quarantine --locked
+      - name: Install cargo-quarantine and zizmor
+        run: cargo install cargo-quarantine zizmor --locked
 
       - name: Run prek hooks
         uses: j178/prek-action@bdca6f102f98e2b4c7029491a53dfd366469e33d # v2.0.4
+        env:
+          # zizmor uses this for its online audits (impostor-commit detection).
+          GH_TOKEN: ${{ github.token }}
